@@ -2,4 +2,6 @@
 .env
 .prisma
 
+.vercel
+
 node_modules
