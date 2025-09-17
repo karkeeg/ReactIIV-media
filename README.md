@@ -62,12 +62,14 @@ app/
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone [your-repository-url]
    cd [project-name]
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    # or
@@ -75,18 +77,22 @@ app/
    ```
 
 3. Set up environment variables:
+
    ```bash
    cp .env.example .env.local
    ```
+
    Update the `.env.local` file with your database credentials and API keys.
 
 4. Set up the database:
+
    ```bash
    npx prisma generate
    npx prisma db push
    ```
 
 5. Run the development server:
+
    ```bash
    npm run dev
    # or
@@ -147,5 +153,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  Made with ❤️ by [Your Name]
+  Made with ❤️ by Bibek karki
 </div>
