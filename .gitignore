@@ -1,0 +1,5 @@
+.next
+.env
+.prisma
+
+node_modules

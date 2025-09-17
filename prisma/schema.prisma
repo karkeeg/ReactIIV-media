@@ -1,0 +1,153 @@
+generator client {
+    provider = "prisma-client-js"
+    previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    extensions = [pgcrypto]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  firstName     String?
+  lastName      String?
+  businessType  String?   // Coach, Content Creator, Entrepreneur, Consultant
+  experience    String?   // Beginner, Intermediate, Advanced
+  onboardingCompleted Boolean @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  extractions   Extraction[]
+  products      Product[]
+  progress      UserProgress?
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Main extraction sessions - tracks user progress through the 8-step process
+model Extraction {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  niche       String?
+  targetAudience String?
+  transformation String?
+  currentStep Int      @default(1)
+  isComplete  Boolean  @default(false)
+  productIdea String?  @db.Text
+  sixPillars  Json?    // Store the 6-pillar structure
+  percMethod  Json?    // Store PERC method data
+  resources   Json?    // Store generated resources
+  salesPage   Json?    // Store sales page data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+}
+
+// Generated products from extractions
+model Product {
+  id           String   @id @default(cuid())
+  userId       String
+  extractionId String
+  title        String
+  description  String?  @db.Text
+  structure    Json     // 6-pillar structure with content
+  pricing      Json?    // Pricing strategy data
+  salesCopy    Json?    // Sales page content
+  bonuses      Json?    // Bonus materials
+  resources    Json?    // Templates, checklists, etc.
+  status       String   @default("draft") // draft, ready, launched
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  extraction Extraction @relation(fields: [extractionId], references: [id], onDelete: Cascade)
+}
+
+// Track user progress through the system
+model UserProgress {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  completedExtractions  Int      @default(0)
+  completedProducts     Int      @default(0)
+  currentStep           String   @default("onboarding")
+  achievements          Json?    // Track achievements and milestones
+  timeInSystem          Int      @default(0) // minutes spent
+  lastActiveAt          DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Template gallery for quick starts
+model Template {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  category    String   // "sales-page", "email-sequence", "product-structure", "bonus-materials"
+  template    Json     // Template structure/content
+  tags        String[] // For filtering
+  isPopular   Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Prompt library for different stages
+model Prompt {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  stage       String   // "extraction", "pillar-expansion", "sales-page", "bonus-creation"
+  prompt      String   @db.Text
+  category    String   // Business type or niche category
+  variables   Json?    // Dynamic variables in prompt
+  usageCount  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
